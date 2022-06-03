@@ -2,8 +2,7 @@
 # This file is distributed under New Relic's license terms.
 # See https://github.com/newrelic/newrelic-ruby-agent/blob/main/LICENSE for complete details.
 
-require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', '..', 'test_helper'))
-
+require_relative '../../../test_helper'
 require 'new_relic/agent/transaction/segment'
 
 module NewRelic
@@ -165,14 +164,8 @@ module NewRelic
             "OtherTransactionTotalTime/test",
             "DurationByCaller/Unknown/Unknown/Unknown/Unknown/all",
             "Supportability/API/recording_web_transaction?",
-            "DurationByCaller/Unknown/Unknown/Unknown/Unknown/allOther",
-            'Logging/lines',
-            'Logging/lines/INFO',
-            'Logging/size',
-            'Logging/size/INFO',
-            'Supportability/API/increment_metric',
-            'Supportability/API/record_metric'
-          ]
+            "DurationByCaller/Unknown/Unknown/Unknown/Unknown/allOther"
+          ], :ignore_filter => %r{^(Supportability/Logging|Supportability/API)}
         end
 
         def test_segment_can_disable_scoped_metric_recording_with_unscoped_as_frozen_array

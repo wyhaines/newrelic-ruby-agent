@@ -10,9 +10,8 @@ require 'rubygems'
 require 'base64'
 require 'fileutils'
 require 'digest'
-
-require File.expand_path '../../multiverse', __FILE__
-require File.expand_path '../shell_utils', __FILE__
+require_relative '../multiverse'
+require_relative 'shell_utils'
 
 module Multiverse
   class Suite
@@ -251,8 +250,6 @@ module Multiverse
     end
 
     def generate_gemfile(gemfile_text, env_index, local = true)
-      pin_rack_version_if_needed(gemfile_text)
-
       gemfile = File.join(Dir.pwd, "Gemfile.#{env_index}")
       File.open(gemfile, 'w') do |f|
         f.puts 'source "https://rubygems.org"'
@@ -305,16 +302,6 @@ module Multiverse
       require 'minitest'
     rescue LoadError
       require 'minitest/unit'
-    end
-
-    # Rack 2.0 works with Ruby > 2.2.2. Earlier rubies need to pin
-    # their Rack version prior to 2.0
-    def pin_rack_version_if_needed gemfile_text
-      return if suite == "rack"
-      rx = /^\s*?gem\s*?('|")rack('|")\s*?$/
-      if gemfile_text =~ rx && RUBY_VERSION < "2.2.2"
-        gemfile_text.gsub! rx, 'gem "rack", "< 2.0.0"'
-      end
     end
 
     def print_environment

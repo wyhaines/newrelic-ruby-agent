@@ -2,7 +2,7 @@
 # This file is distributed under New Relic's license terms.
 # See https://github.com/newrelic/newrelic-ruby-agent/blob/main/LICENSE for complete details.
 
-require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'test_helper'))
+require_relative '../../test_helper'
 require 'new_relic/agent/agent_logger'
 require 'new_relic/agent/null_logger'
 
@@ -355,6 +355,32 @@ class AgentLoggerTest < Minitest::Test
     logger.log_once(:warn, :positive, "thoughts")
 
     assert_logged "thoughts", "thoughts"
+  end
+
+  def test_doesnt_write_log_event_aggregator
+    message = "Oops shouldn't have logged"
+    with_config(:'log_file_path' => 'stdout') do
+      NewRelic::Agent.agent.log_event_aggregator.reset!
+
+      logger = create_basic_logger
+      logger.fatal(message)
+
+      _, logs = NewRelic::Agent.agent.log_event_aggregator.harvest!
+      assert_empty logs.select { |log| log.last["message"].include?(message) }
+    end
+  end
+
+  def test_doesnt_write_log_event_aggregator_with_null_logger
+    message = "Oops shouldn't have logged"
+    with_config(:agent_enabled => false) do
+      NewRelic::Agent.agent.log_event_aggregator.reset!
+
+      logger = create_basic_logger
+      logger.fatal(message)
+
+      _, logs = NewRelic::Agent.agent.log_event_aggregator.harvest!
+      assert_empty logs.select { |log| log.last["message"].include?(message) }
+    end
   end
 
   #

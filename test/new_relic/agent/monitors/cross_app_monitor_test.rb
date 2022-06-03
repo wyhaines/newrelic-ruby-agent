@@ -2,7 +2,7 @@
 # This file is distributed under New Relic's license terms.
 # See https://github.com/newrelic/newrelic-ruby-agent/blob/main/LICENSE for complete details.
 
-require File.expand_path '../../../../test_helper', __FILE__
+require_relative '../../../test_helper'
 
 module NewRelic::Agent
   class CrossAppMonitorTest < Minitest::Test
@@ -161,12 +161,7 @@ module NewRelic::Agent
         'Supportability/API/drop_buffered_data',
         'OtherTransactionTotalTime',
         'OtherTransactionTotalTime/transaction',
-        'Logging/lines',
-        'Logging/lines/WARN',
-        'Logging/size',
-        'Logging/size/WARN',
         'Supportability/API/record_metric',
-        'Supportability/API/increment_metric',
         'Supportability/Deprecated/cross_application_tracer'
       ])
     end

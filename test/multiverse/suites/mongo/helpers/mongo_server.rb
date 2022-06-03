@@ -4,8 +4,8 @@
 
 require 'fileutils'
 require 'timeout'
-require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', '..', '..', 'helpers', 'file_searching'))
-require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', '..', '..', 'helpers', 'docker'))
+require_relative '../../../../helpers/file_searching'
+require_relative '../../../../helpers/docker'
 
 class MongoServer
   extend NewRelic::TestHelpers::FileSearching
@@ -195,7 +195,7 @@ class MongoServer
   end
 
   def pid
-    File.read(pid_path).to_i if File.exists? pid_path
+    File.read(pid_path).to_i if File.exist? pid_path
   end
 
   def next_available_port

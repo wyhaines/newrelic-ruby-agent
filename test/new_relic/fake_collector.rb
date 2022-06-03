@@ -9,7 +9,6 @@ require 'socket'
 require 'timeout'
 require 'ostruct'
 require 'fake_server'
-
 require 'json'
 
 module NewRelic
@@ -72,7 +71,8 @@ module NewRelic
         'analytic_event_data' => Response.new(200, {'return_value' => nil}),
         'custom_event_data' => Response.new(200, {'return_value' => nil}),
         'error_event_data' => Response.new(200, {'return_value' => nil}),
-        'span_event_data' => Response.new(200, {'return_value' => nil})
+        'span_event_data' => Response.new(200, {'return_value' => nil}),
+        'log_event_data' => Response.new(200, {'return_value' => nil})
       }
       reset
     end
@@ -137,6 +137,7 @@ module NewRelic
       begin
         raw_body = req.body.read
         raw_body = Zlib::Inflate.inflate(raw_body) if req.env["HTTP_CONTENT_ENCODING"] == "deflate"
+        raw_body = Zlib::GzipReader.new(StringIO.new(raw_body)).read if req.env["HTTP_CONTENT_ENCODING"] == "gzip"
 
         body = ::JSON.load(raw_body)
       rescue
@@ -208,6 +209,8 @@ module NewRelic
           ErrorEventDataPost.new(opts)
         when 'span_event_data'
           SpanEventDataPost.new(opts)
+        when 'log_event_data'
+          LogEventDataPost.new(opts)
         else
           new(opts)
         end
@@ -392,6 +395,16 @@ module NewRelic
 
       def intrinsic_attributes
         @params["intrinsics"]
+      end
+    end
+
+    class LogEventDataPost < AgentPost
+      attr_reader :common, :logs
+
+      def initialize opts = {}
+        super
+        @common = body.first["common"]
+        @logs = body.first["logs"]
       end
     end
   end

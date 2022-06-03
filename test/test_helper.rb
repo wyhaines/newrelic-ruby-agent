@@ -15,13 +15,9 @@ require 'rubygems'
 require 'rake'
 
 require 'minitest/autorun'
+require 'minitest/pride' unless ENV['CI']
 require 'minitest/stub_const'
 require 'mocha/setup'
-
-require 'hometown'
-require_relative 'helpers/hometown_monkey_patch'
-
-Hometown.watch(::Thread)
 
 Dir[File.expand_path('../helpers/*', __FILE__)].each { |f| require f.sub(/.*test\//, '') }
 
@@ -48,3 +44,8 @@ end
 # This is the public method recommended for plugin developers to share our
 # agent helpers. Use it so we don't accidentally break it.
 NewRelic::Agent.require_test_helper
+
+# If these are set, many tests fail. We delete them from this process.
+# This is an example of a test fail: unexpected invocation: #<Mock:0x28438>.sync=(true) (MiniTest::Assertion)
+ENV.delete('NEW_RELIC_LICENSE_KEY')
+ENV.delete('NEW_RELIC_HOST')

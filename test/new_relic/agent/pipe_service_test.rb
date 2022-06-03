@@ -2,7 +2,7 @@
 # This file is distributed under New Relic's license terms.
 # See https://github.com/newrelic/newrelic-ruby-agent/blob/main/LICENSE for complete details.
 
-require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'test_helper'))
+require_relative '../../test_helper'
 
 class PipeServiceTest < Minitest::Test
   def setup
@@ -103,6 +103,14 @@ class PipeServiceTest < Minitest::Test
         @service.transaction_sample_data([payload_with_newline])
       end
       assert_equal [payload_with_newline], received_data[:transaction_sample_data]
+    end
+
+    def test_log_event_data
+      payload = [{}, [[{"priority" => 1}, {"message" => "yo"}]]]
+      received_data = data_from_forked_process do
+        @service.log_event_data(payload)
+      end
+      assert_equal payload, received_data[:log_event_data]
     end
 
     def test_multiple_writes_to_pipe

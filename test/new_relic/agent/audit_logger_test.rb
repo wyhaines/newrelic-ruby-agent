@@ -2,7 +2,7 @@
 # This file is distributed under New Relic's license terms.
 # See https://github.com/newrelic/newrelic-ruby-agent/blob/main/LICENSE for complete details.
 
-require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'test_helper'))
+require_relative '../../test_helper'
 require 'new_relic/agent/audit_logger'
 require 'new_relic/agent/null_logger'
 
@@ -200,6 +200,20 @@ class AuditLoggerTest < Minitest::Test
     with_config(:'log_file_path' => 'stdout') do
       logger = NewRelic::Agent::AuditLogger.new
       refute_includes logger.ensure_log_path, 'stdout'
+    end
+  end
+
+  def test_doesnt_write_log_event_aggregator
+    with_config(:'log_file_path' => 'stdout') do
+      NewRelic::Agent.agent.log_event_aggregator.reset!
+
+      logger = NewRelic::Agent::AuditLogger.new
+      logger.log_request(@uri, @dummy_data, @marshaller)
+
+      _, logs = NewRelic::Agent.agent.log_event_aggregator.harvest!
+      audits = logs.select { |log| log.last["message"].include?("REQUEST") }
+
+      assert_empty audits
     end
   end
 

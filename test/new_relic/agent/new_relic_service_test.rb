@@ -3,7 +3,7 @@
 # See https://github.com/newrelic/newrelic-ruby-agent/blob/main/LICENSE for complete details.
 
 require 'cgi'
-require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'test_helper'))
+require_relative '../../test_helper'
 require 'new_relic/agent/commands/thread_profiler_session'
 
 class NewRelicServiceTest < Minitest::Test
@@ -461,10 +461,22 @@ class NewRelicServiceTest < Minitest::Test
     assert_equal 'some analytic events', response
   end
 
-  def error_event_data
+  def test_error_event_data
     @http_handle.respond_to(:error_event_data, 'some error events')
     response = @service.error_event_data([{}, []])
     assert_equal 'some error events', response
+  end
+
+  def test_span_event_data
+    @http_handle.respond_to(:span_event_data, 'some span events')
+    response = @service.span_event_data([{}, []])
+    assert_equal 'some span events', response
+  end
+
+  def test_log_event_data
+    @http_handle.respond_to(:log_event_data, 'some log events')
+    response = @service.log_event_data([{}, []])
+    assert_equal 'some log events', response
   end
 
   # Although thread profiling is only available in some circumstances, the
@@ -818,8 +830,32 @@ class NewRelicServiceTest < Minitest::Test
       'Supportability/Agent/Collector/foobar/Duration' => {:call_count => 1},
       'Supportability/invoke_remote_serialize' => {:call_count => 1},
       'Supportability/invoke_remote_serialize/foobar' => {:call_count => 1},
-      'Supportability/invoke_remote_size' => expected_values,
-      'Supportability/invoke_remote_size/foobar' => expected_values
+      'Supportability/Ruby/Collector/Output/Bytes' => expected_values,
+      'Supportability/Ruby/Collector/foobar/Output/Bytes' => expected_values
+    )
+  end
+
+  def test_supportability_metrics_report_uncompressed_size
+    NewRelic::Agent.drop_buffered_data
+
+    payload = 'E' * (NewRelic::Agent::NewRelicService::MIN_BYTE_SIZE_TO_COMPRESS + 20)
+    method = :eddie_izzard
+    @http_handle.respond_to(method, method.to_s)
+    @service.send(:invoke_remote, method, payload, :item_count => 12)
+
+    expected_size_bytes = @service.marshaller.dump(payload).size
+    expected_values = {
+      :call_count => 1,
+      :total_call_time => expected_size_bytes,
+      :total_exclusive_time => 12
+    }
+
+    assert_metrics_recorded(
+      "Supportability/Agent/Collector/#{method}/Duration" => {:call_count => 1},
+      'Supportability/invoke_remote_serialize' => {:call_count => 1},
+      "Supportability/invoke_remote_serialize/#{method}" => {:call_count => 1},
+      'Supportability/Ruby/Collector/Output/Bytes' => expected_values,
+      "Supportability/Ruby/Collector/#{method}/Output/Bytes" => expected_values
     )
   end
 
@@ -854,8 +890,8 @@ class NewRelicServiceTest < Minitest::Test
       'Supportability/Agent/Collector/foobar/Duration' => {:call_count => 1},
       'Supportability/invoke_remote_serialize' => {:call_count => 1},
       'Supportability/invoke_remote_serialize/foobar' => {:call_count => 1},
-      'Supportability/invoke_remote_size' => expected_values,
-      'Supportability/invoke_remote_size/foobar' => expected_values
+      'Supportability/Ruby/Collector/Output/Bytes' => expected_values,
+      'Supportability/Ruby/Collector/foobar/Output/Bytes' => expected_values
     )
   end
 
@@ -880,8 +916,8 @@ class NewRelicServiceTest < Minitest::Test
     assert_metrics_not_recorded([
       'Supportability/invoke_remote_serialize',
       'Supportability/invoke_remote_serialize/foobar',
-      'Supportability/invoke_remote_size',
-      'Supportability/invoke_remote_size/foobar'
+      'Supportability/Ruby/Collector/Output/Bytes',
+      'Supportability/Ruby/Collector/foobar/Output/Bytes'
     ])
   end
 

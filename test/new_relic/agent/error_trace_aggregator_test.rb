@@ -2,8 +2,8 @@
 # This file is distributed under New Relic's license terms.
 # See https://github.com/newrelic/newrelic-ruby-agent/blob/main/LICENSE for complete details.
 
-require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'test_helper'))
-require File.expand_path(File.join(File.dirname(__FILE__), '..', 'data_container_tests'))
+require_relative '../../test_helper'
+require_relative '../data_container_tests'
 
 module NewRelic
   module Agent
@@ -181,14 +181,7 @@ module NewRelic
         error_trace_aggregator.notice_agent_error(DifficultToDebugAgentError.new)
         error_trace_aggregator.notice_agent_error(AnotherToughAgentError.new)
 
-        assert_metrics_recorded_exclusive([
-          'Logging/lines',
-          'Logging/lines/INFO',
-          'Logging/size',
-          'Logging/size/INFO',
-          'Supportability/API/increment_metric',
-          'Supportability/API/record_metric'
-        ])
+        assert_metrics_recorded_exclusive([])
       end
 
       def test_notice_agent_error_set_noticed_error_attributes
